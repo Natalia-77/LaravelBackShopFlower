@@ -95,7 +95,7 @@ class AuthController extends Controller
      ** path="/api/auth/register",
      *   tags={"Auth"},
      *   summary="Register",
-     *   operationId="register",
+     *   operationId="register",git status     *
      *
      *  @OA\Parameter(
      *      name="name",
