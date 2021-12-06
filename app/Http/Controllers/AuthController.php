@@ -191,7 +191,14 @@ class AuthController extends Controller
             Response::$statusTexts[Response::HTTP_CREATED]);
     }
 
-
+    /**
+     * @OA\Post(
+     *     path="/api/auth/logout",
+     *     tags={"Auth"},
+     *     security={{"apiAuth":{}}},
+     *     @OA\Response(response="200", description="Display a listing of projects.")
+     * )
+     */
     /**
      * Log the user out (Invalidate the token).
      *
@@ -204,6 +211,14 @@ class AuthController extends Controller
             Response::$statusTexts[Response::HTTP_OK]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/auth/refresh",
+     *     tags={"Auth"},
+     *     security={{"apiAuth":{}}},
+     *     @OA\Response(response="200", description="Display a listing of projects.")
+     * )
+     */
     /**
      * Refresh a token.
      *
