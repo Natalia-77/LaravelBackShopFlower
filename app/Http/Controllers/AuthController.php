@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Validator;
-
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
@@ -84,11 +84,13 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(),422 );
+            return response()->json($validator->errors())->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY,
+                Response::$statusTexts[Response::HTTP_UNPROCESSABLE_ENTITY]);
         }
 
         if (! $token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return response()->json(['error' => 'Unauthorized'])->setStatusCode(Response::HTTP_FORBIDDEN,
+                Response::$statusTexts[Response::HTTP_FORBIDDEN]);;
         }
 
         return $this->createNewToken($token);
@@ -176,7 +178,8 @@ class AuthController extends Controller
         ]);
 
         if($validator->fails()){
-            return response()->json($validator->errors()->toJson(),Response::HTTP_BAD_REQUEST);
+            return response()->json($validator->errors())->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY,
+                Response::$statusTexts[Response::HTTP_UNPROCESSABLE_ENTITY]);
         }
 
         $user = User::create(array_merge(
@@ -184,10 +187,8 @@ class AuthController extends Controller
             ['password' => bcrypt($request->password)]
         ));
 
-        return response()->json([
-            'message' => 'User successfully registered',
-            'user' => $user
-        ],201);
+        return response()->json(['user' => $user])->setStatusCode(Response::HTTP_CREATED,
+            Response::$statusTexts[Response::HTTP_CREATED]);
     }
 
 
@@ -199,7 +200,8 @@ class AuthController extends Controller
     public function logout() {
         auth()->logout();
 
-        return response()->json(['message' => 'User successfully signed out']);
+        return response()->json(['message' => 'User successfully signed out'])->setStatusCode(Response::HTTP_OK,
+            Response::$statusTexts[Response::HTTP_OK]);
     }
 
     /**
@@ -208,7 +210,8 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function refresh() {
-        return $this->createNewToken(auth()->refresh());
+        return $this->createNewToken(auth()->refresh())->setStatusCode(Response::HTTP_OK,
+            Response::$statusTexts[Response::HTTP_OK]);
     }
 
     /**
@@ -227,7 +230,8 @@ class AuthController extends Controller
      */
 
     public function userProfile() {
-        return response()->json(auth()->user());
+        return response()->json(auth()->user())->setStatusCode(Response::HTTP_OK,
+            Response::$statusTexts[Response::HTTP_OK]);
     }
 
     /**
@@ -243,7 +247,7 @@ class AuthController extends Controller
             'token_type' => 'bearer',
             'expires_in' => auth()->factory()->getTTL() * 60,
             'user' => auth()->user()
-        ]);
+        ])->setStatusCode(Response::HTTP_OK,Response::$statusTexts[Response::HTTP_OK]);
     }
 
 }
