@@ -23,7 +23,7 @@ class AuthController extends Controller
      * @OA\Post(
      ** path="/api/auth/login",
      *   tags={"Auth"},
-     *   summary="Login",
+     *   summary="Login user",
      *   operationId="login",
      *
      *   @OA\Parameter(
@@ -59,11 +59,15 @@ class AuthController extends Controller
      *   ),
      *   @OA\Response(
      *      response=404,
-     *      description="not found"
+     *      description="Not found"
      *   ),
      *      @OA\Response(
      *          response=403,
      *          description="Forbidden"
+     *      ),
+     *     @OA\Response(
+     *          response=422,
+     *          description="Validation error"
      *      )
      *)
      **/
@@ -80,11 +84,11 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json($validator->errors(),422 );
         }
 
         if (! $token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
         return $this->createNewToken($token);
@@ -94,8 +98,8 @@ class AuthController extends Controller
      * @OA\Post(
      ** path="/api/auth/register",
      *   tags={"Auth"},
-     *   summary="Register",
-     *   operationId="register",git status     *
+     *   summary="Register new user",
+     *   operationId="register",
      *
      *  @OA\Parameter(
      *      name="name",
@@ -142,15 +146,19 @@ class AuthController extends Controller
      *   ),
      *   @OA\Response(
      *      response=400,
-     *      description="Bad Request Закушуємо нормально"
+     *      description="Bad Request "
      *   ),
      *   @OA\Response(
      *      response=404,
-     *      description="not found"
+     *      description="Not found"
      *   ),
      *      @OA\Response(
      *          response=403,
      *          description="Forbidden"
+     *      ),
+     *     @OA\Response(
+     *          response=422,
+     *          description="Validation error"
      *      )
      *)
      **/
@@ -168,7 +176,7 @@ class AuthController extends Controller
         ]);
 
         if($validator->fails()){
-            return response()->json($validator->errors()->toJson(), 400);
+            return response()->json($validator->errors()->toJson(),Response::HTTP_BAD_REQUEST);
         }
 
         $user = User::create(array_merge(
@@ -179,7 +187,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'User successfully registered',
             'user' => $user
-        ], 201);
+        ],201);
     }
 
 
@@ -212,6 +220,7 @@ class AuthController extends Controller
      * @OA\Get(
      *     path="/api/auth/user-profile",
      *     tags={"Auth"},
+     *     summary="Profile user",
      *     security={{"apiAuth":{}}},
      *     @OA\Response(response="200", description="Display a listing of projects.")
      * )

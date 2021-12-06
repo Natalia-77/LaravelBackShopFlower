@@ -10,7 +10,7 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Login",
+                "summary": "Login user",
                 "operationId": "login",
                 "parameters": [
                     {
@@ -44,10 +44,13 @@
                         "description": "Bad Request"
                     },
                     "404": {
-                        "description": "not found"
+                        "description": "Not found"
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -57,7 +60,7 @@
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Register",
+                "summary": "Register new user",
                 "operationId": "register",
                 "parameters": [
                     {
@@ -104,13 +107,16 @@
                         "description": "Unauthenticated"
                     },
                     "400": {
-                        "description": "Bad Request Закушуємо нормально"
+                        "description": "Bad Request "
                     },
                     "404": {
-                        "description": "not found"
+                        "description": "Not found"
                     },
                     "403": {
                         "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 }
             }
@@ -120,6 +126,7 @@
                 "tags": [
                     "Auth"
                 ],
+                "summary": "Profile user",
                 "operationId": "4188c99fa2637f92b254e6526b44fc50",
                 "responses": {
                     "200": {
