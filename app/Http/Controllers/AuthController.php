@@ -15,7 +15,8 @@ class AuthController extends Controller
      *
      * @return void
      */
-    public function __construct() {
+    public function __construct()
+    {
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
@@ -77,7 +78,8 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:6',
@@ -88,7 +90,7 @@ class AuthController extends Controller
                 Response::$statusTexts[Response::HTTP_UNPROCESSABLE_ENTITY]);
         }
 
-        if (! $token = auth()->attempt($validator->validated())) {
+        if (!$token = auth()->attempt($validator->validated())) {
             return response()->json(['error' => 'Unauthorized'])->setStatusCode(Response::HTTP_FORBIDDEN,
                 Response::$statusTexts[Response::HTTP_FORBIDDEN]);;
         }
@@ -170,99 +172,115 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(Request $request) {
+    public function register(Request $request)
+    {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
         ]);
+        if ($request->has('images')) {
+            foreach ($request->file('images') as $image) {
+                $filename = time() . rand(3) . '.' . $image->getClientOriginalExtension();
+                $image->move('uploads/', $filename);
+            }
+            if ($validator->fails()) {
+                return response()->json($validator->errors())->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY,
+                    Response::$statusTexts[Response::HTTP_UNPROCESSABLE_ENTITY]);
+            }
 
-        if($validator->fails()){
-            return response()->json($validator->errors())->setStatusCode(Response::HTTP_UNPROCESSABLE_ENTITY,
-                Response::$statusTexts[Response::HTTP_UNPROCESSABLE_ENTITY]);
+            $user = User::create(array_merge(
+                $validator->validated(),
+                ['password' => bcrypt($request->password),
+                    'Image' =>$filename]
+            ));
+
+            return response()->json(['user' => $user])->setStatusCode(Response::HTTP_CREATED,
+                Response::$statusTexts[Response::HTTP_CREATED]);
+        }
+    }
+
+        /**
+         * @OA\Post(
+         *     path="/api/auth/logout",
+         *     tags={"Auth"},
+         *     security={{"apiAuth":{}}},
+         *     @OA\Response(response="200", description="Display a listing of projects.")
+         * )
+         */
+        /**
+         * Log the user out (Invalidate the token).
+         *
+         * @return \Illuminate\Http\JsonResponse
+         */
+        public
+        function logout()
+        {
+            auth()->logout();
+
+            return response()->json(['message' => 'User successfully signed out'])->setStatusCode(Response::HTTP_OK,
+                Response::$statusTexts[Response::HTTP_OK]);
         }
 
-        $user = User::create(array_merge(
-            $validator->validated(),
-            ['password' => bcrypt($request->password)]
-        ));
+        /**
+         * @OA\Post(
+         *     path="/api/auth/refresh",
+         *     tags={"Auth"},
+         *     security={{"apiAuth":{}}},
+         *     @OA\Response(response="200", description="Display a listing of projects.")
+         * )
+         */
+        /**
+         * Refresh a token.
+         *
+         * @return \Illuminate\Http\JsonResponse
+         */
+        public
+        function refresh()
+        {
+            return $this->createNewToken(auth()->refresh())->setStatusCode(Response::HTTP_OK,
+                Response::$statusTexts[Response::HTTP_OK]);
+        }
 
-        return response()->json(['user' => $user])->setStatusCode(Response::HTTP_CREATED,
-            Response::$statusTexts[Response::HTTP_CREATED]);
-    }
+        /**
+         * Get the authenticated User.
+         *
+         * @return \Illuminate\Http\JsonResponse
+         */
+        /**
+         * @OA\Get(
+         *     path="/api/auth/user-profile",
+         *     tags={"Auth"},
+         *     summary="Profile user",
+         *     security={{"apiAuth":{}}},
+         *     @OA\Response(response="200", description="Display a listing of projects.")
+         * )
+         */
 
-    /**
-     * @OA\Post(
-     *     path="/api/auth/logout",
-     *     tags={"Auth"},
-     *     security={{"apiAuth":{}}},
-     *     @OA\Response(response="200", description="Display a listing of projects.")
-     * )
-     */
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function logout() {
-        auth()->logout();
+        public
+        function userProfile()
+        {
+            return response()->json(auth()->user())->setStatusCode(Response::HTTP_OK,
+                Response::$statusTexts[Response::HTTP_OK]);
+        }
 
-        return response()->json(['message' => 'User successfully signed out'])->setStatusCode(Response::HTTP_OK,
-            Response::$statusTexts[Response::HTTP_OK]);
-    }
+        /**
+         * Get the token array structure.
+         *
+         * @param string $token
+         *
+         * @return \Illuminate\Http\JsonResponse
+         */
+        protected
+        function createNewToken($token)
+        {
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => auth()->factory()->getTTL() * 60,
+                'user' => auth()->user()
+            ])->setStatusCode(Response::HTTP_OK, Response::$statusTexts[Response::HTTP_OK]);
+        }
 
-    /**
-     * @OA\Post(
-     *     path="/api/auth/refresh",
-     *     tags={"Auth"},
-     *     security={{"apiAuth":{}}},
-     *     @OA\Response(response="200", description="Display a listing of projects.")
-     * )
-     */
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh() {
-        return $this->createNewToken(auth()->refresh())->setStatusCode(Response::HTTP_OK,
-            Response::$statusTexts[Response::HTTP_OK]);
-    }
-
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * @OA\Get(
-     *     path="/api/auth/user-profile",
-     *     tags={"Auth"},
-     *     summary="Profile user",
-     *     security={{"apiAuth":{}}},
-     *     @OA\Response(response="200", description="Display a listing of projects.")
-     * )
-     */
-
-    public function userProfile() {
-        return response()->json(auth()->user())->setStatusCode(Response::HTTP_OK,
-            Response::$statusTexts[Response::HTTP_OK]);
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function createNewToken($token){
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60,
-            'user' => auth()->user()
-        ])->setStatusCode(Response::HTTP_OK,Response::$statusTexts[Response::HTTP_OK]);
-    }
 
 }
